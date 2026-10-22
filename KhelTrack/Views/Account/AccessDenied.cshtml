@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Access Restricted";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 text-center">
+        <div class="khel-card p-5">
+            <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                <i class="bi bi-shield-slash"></i>
+            </div>
+            <h2 class="fw-bold text-white mb-2">Access Restricted</h2>
+            <p class="text-secondary mb-4">
+                You do not have administrative privileges to access this sports governance resource. This area is reserved for the Sports Director and Committee Admins.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-khel-primary">
+                    <i class="bi bi-house-door me-1"></i> Return Home
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-khel-outline">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Switch Account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

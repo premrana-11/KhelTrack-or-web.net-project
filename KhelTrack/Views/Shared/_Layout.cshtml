@@ -1,0 +1,240 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - KhelTrack | Intra-College Sports & Tournament Hub</title>
+    
+    <!-- Bootstrap 5 & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    
+    <!-- Custom Athletic Sports Theme -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-khel sticky-top">
+            <div class="container-fluid px-lg-4">
+                <a class="brand-logo" asp-controller="Home" asp-action="Index">
+                    <div class="brand-icon-box">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <span>Khel<span class="text-warning">Track</span></span>
+                    <span class="brand-badge d-none d-sm-inline">Campus Sports</span>
+                </a>
+
+                <button class="navbar-toggler border-0 shadow-none text-light" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="bi bi-list fs-2"></i>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-khel" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-grid-1x2 me-1 text-primary"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-khel" asp-controller="Tournament" asp-action="Index">
+                                <i class="bi bi-trophy me-1 text-warning"></i> Tournaments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-khel" asp-controller="Match" asp-action="Index">
+                                <i class="bi bi-calendar-event me-1 text-info"></i> Fixtures & Scores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-khel" asp-controller="Team" asp-action="Index">
+                                <i class="bi bi-people me-1 text-success"></i> Teams
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-khel" asp-controller="Home" asp-action="Leaderboard">
+                                <i class="bi bi-bar-chart-line me-1 text-danger"></i> Leaderboard
+                            </a>
+                        </li>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link nav-link-khel dropdown-toggle text-warning" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-shield-lock me-1"></i> Admin Console
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark bg-dark border-secondary shadow-lg" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Dashboard"><i class="bi bi-speedometer2 me-2 text-primary"></i> Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="PendingApprovals"><i class="bi bi-check2-circle me-2 text-warning"></i> Pending Team Approvals</a></li>
+                                    <li><hr class="dropdown-divider border-secondary" /></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Tournament" asp-action="Create"><i class="bi bi-plus-circle me-2 text-success"></i> Create Tournament</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Match" asp-action="Create"><i class="bi bi-calendar-plus me-2 text-info"></i> Schedule Fixture</a></li>
+                                    <li><hr class="dropdown-divider border-secondary" /></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="AuditLogs"><i class="bi bi-journal-text me-2 text-danger"></i> Audit Trail Logs</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Admin" asp-action="Users"><i class="bi bi-person-lines-fill me-2 text-light"></i> User Management</a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- User authentication / registration actions -->
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            var user = await UserManager.GetUserAsync(User);
+                            <li class="nav-item">
+                                <a class="btn btn-sm btn-khel-accent" asp-controller="Team" asp-action="Register">
+                                    <i class="bi bi-plus-lg me-1"></i> Register Team
+                                </a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-light d-flex align-items-center gap-2 py-1 px-2 rounded hover-surface" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                        @(user?.FullName?.Substring(0, 1) ?? "U")
+                                    </div>
+                                    <div class="text-start d-none d-sm-block">
+                                        <div class="fw-semibold text-white lh-1" style="font-size: 0.85rem;">@(user?.FullName ?? User.Identity?.Name)</div>
+                                        <small class="text-muted" style="font-size: 0.72rem;">@(User.IsInRole("Admin") ? "Sports Admin" : (User.IsInRole("Captain") ? "Team Captain" : "Student"))</small>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-dark border-secondary shadow-lg" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="Profile"><i class="bi bi-person-circle me-2 text-info"></i> My Profile</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Team" asp-action="MyTeams"><i class="bi bi-flag-fill me-2 text-warning"></i> My Registered Teams</a></li>
+                                    <li><hr class="dropdown-divider border-secondary" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item py-2 text-danger">
+                                                <i class="bi bi-box-arrow-right me-2"></i> Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-khel" asp-controller="Account" asp-action="Login">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-sm btn-khel-primary" asp-controller="Account" asp-action="Register">
+                                    <i class="bi bi-person-plus me-1"></i> Register Account
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main role="main" class="flex-grow-1 py-4">
+        <div class="container-fluid px-lg-4">
+            <!-- Flash Notifications -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show bg-success bg-opacity-25 border-success text-white d-flex align-items-center mb-4 shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+                    <div>@TempData["Success"]</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show bg-danger bg-opacity-25 border-danger text-white d-flex align-items-center mb-4 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-danger"></i>
+                    <div>@TempData["Error"]</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show bg-warning bg-opacity-25 border-warning text-white d-flex align-items-center mb-4 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-circle-fill fs-5 me-2 text-warning"></i>
+                    <div>@TempData["Warning"]</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show bg-info bg-opacity-25 border-info text-white d-flex align-items-center mb-4 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill fs-5 me-2 text-info"></i>
+                    <div>@TempData["Info"]</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-khel">
+        <div class="container-fluid px-lg-4">
+            <div class="row gy-4 mb-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="brand-icon-box" style="width: 32px; height: 32px; font-size: 1rem;">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold text-white">KhelTrack</h5>
+                    </div>
+                    <p class="text-secondary small mb-3">
+                        The all-in-one Intra-College Sports Tournament & Roster Management System. Tracking campus athletic events, team registrations, live scores, and audit logging.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-secondary bg-opacity-25 border border-secondary text-light">.NET Core MVC</span>
+                        <span class="badge bg-secondary bg-opacity-25 border border-secondary text-light">EF Core</span>
+                        <span class="badge bg-secondary bg-opacity-25 border border-secondary text-light">Audit Trail Active</span>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-white fw-bold mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Navigation</h6>
+                    <ul class="list-unstyled text-secondary small d-flex flex-column gap-2 mb-0">
+                        <li><a class="text-secondary text-decoration-none hover-white" asp-controller="Home" asp-action="Index">Dashboard</a></li>
+                        <li><a class="text-secondary text-decoration-none hover-white" asp-controller="Tournament" asp-action="Index">Tournaments</a></li>
+                        <li><a class="text-secondary text-decoration-none hover-white" asp-controller="Match" asp-action="Index">Match Fixtures</a></li>
+                        <li><a class="text-secondary text-decoration-none hover-white" asp-controller="Team" asp-action="Index">Participating Teams</a></li>
+                        <li><a class="text-secondary text-decoration-none hover-white" asp-controller="Home" asp-action="Leaderboard">Leaderboard</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-white fw-bold mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Quick Credentials</h6>
+                    <div class="p-2 rounded bg-dark border border-secondary small text-secondary">
+                        <div><strong class="text-warning">Admin:</strong> admin@kheltrack.com / Admin@123</div>
+                        <div class="mt-1"><strong class="text-info">Captain:</strong> captain1@kheltrack.com / Captain@123</div>
+                        <div class="mt-1"><strong class="text-success">Student:</strong> student1@kheltrack.com / Student@123</div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-white fw-bold mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Campus Sports Office</h6>
+                    <p class="text-secondary small mb-2"><i class="bi bi-geo-alt me-1 text-danger"></i> University Sports Complex, Central Pavilion</p>
+                    <p class="text-secondary small mb-2"><i class="bi bi-envelope me-1 text-primary"></i> sports@kheltrack.edu</p>
+                    <p class="text-secondary small mb-0"><i class="bi bi-telephone me-1 text-success"></i> +91 (020) 2567-8900</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-top border-secondary border-opacity-25 text-center text-secondary small">
+                &copy; @DateTime.UtcNow.Year KhelTrack - Intra-College Athletic & Tournament Platform. Built with ASP.NET Core & EF Core.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

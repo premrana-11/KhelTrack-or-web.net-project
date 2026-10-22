@@ -1,0 +1,188 @@
+@{
+    ViewData["Title"] = "Sports Committee Admin Console";
+    var pendingApprovals = ViewBag.PendingApprovals as List<KhelTrack.Models.Team>;
+    var recentLogs = ViewBag.RecentAuditLogs as List<KhelTrack.Models.AuditLog>;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-shield-lock-fill me-2 text-warning"></i>Sports Committee Console</h2>
+        <p class="text-secondary mb-0">Collegiate tournament administration, team eligibility approvals, and governance audit records.</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Tournament" asp-action="Create" class="btn btn-khel-primary">
+            <i class="bi bi-trophy me-1"></i> New Tournament
+        </a>
+        <a asp-controller="Match" asp-action="Create" class="btn btn-khel-accent">
+            <i class="bi bi-calendar-plus me-1"></i> Schedule Match
+        </a>
+        <a asp-action="AuditLogs" class="btn btn-khel-outline">
+            <i class="bi bi-journal-text me-1"></i> Audit Logs
+        </a>
+    </div>
+</div>
+
+<!-- Metrics Counters -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <span class="text-secondary small fw-semibold text-uppercase">Tournaments</span>
+            <div class="stat-value mt-1">@ViewBag.TotalTournaments</div>
+            <span class="badge bg-success bg-opacity-25 text-success mt-2">@ViewBag.ActiveTournaments Active</span>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <span class="text-secondary small fw-semibold text-uppercase">Pending Approvals</span>
+            <div class="stat-value mt-1 text-warning">@ViewBag.PendingTeamsCount</div>
+            <a asp-action="PendingApprovals" class="badge bg-warning bg-opacity-25 text-warning text-decoration-none mt-2">
+                Review Queue <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <span class="text-secondary small fw-semibold text-uppercase">Total Matches</span>
+            <div class="stat-value mt-1">@ViewBag.TotalMatches</div>
+            <span class="badge bg-danger bg-opacity-25 text-danger mt-2">@ViewBag.LiveMatchesCount Live Now</span>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <span class="text-secondary small fw-semibold text-uppercase">Verified Athletes</span>
+            <div class="stat-value mt-1">@ViewBag.TotalAthletes</div>
+            <span class="badge bg-info bg-opacity-25 text-info mt-2">Across All Squads</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Pending Approvals Queue -->
+    <div class="col-lg-7">
+        <div class="khel-card mb-4">
+            <div class="khel-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-white mb-0">
+                    <i class="bi bi-hourglass-split text-warning me-2"></i>Pending Team Registrations (@(pendingApprovals?.Count ?? 0))
+                </h5>
+                <a asp-action="PendingApprovals" class="btn btn-xs btn-khel-outline">
+                    View All Queue
+                </a>
+            </div>
+
+            <div class="p-3">
+                @if (pendingApprovals != null && pendingApprovals.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var team in pendingApprovals)
+                        {
+                            <div class="p-3 rounded bg-dark border border-secondary border-opacity-25">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-white mb-0">@team.TeamName</h6>
+                                        <span class="text-secondary small">
+                                            @team.Tournament?.Name &bull; Dept: <strong class="text-white">@team.Department</strong>
+                                        </span>
+                                    </div>
+                                    <span class="badge badge-pending">Pending Review</span>
+                                </div>
+
+                                <div class="text-secondary small mb-3">
+                                    Captain: <strong class="text-white">@(team.Captain?.FullName ?? "N/A")</strong> (@team.Captain?.Email) &bull; Squad: <strong class="text-info">@team.Players.Count Athletes</strong>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a asp-controller="Team" asp-action="Details" asp-route-id="@team.Id" class="btn btn-sm btn-khel-outline">
+                                        Inspect Squad
+                                    </a>
+                                    <form asp-action="ApproveTeam" asp-route-id="@team.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="bi bi-check-lg me-1"></i> Approve
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="py-4 text-center text-secondary small">
+                        <i class="bi bi-check2-all fs-2 text-success d-block mb-2"></i>
+                        No pending team registrations awaiting review.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Administration Links -->
+        <div class="khel-card p-4">
+            <h5 class="fw-bold text-white mb-3">Management Shortcuts</h5>
+            <div class="row g-2">
+                <div class="col-sm-6">
+                    <a asp-controller="Tournament" asp-action="Index" class="btn btn-khel-outline w-100 text-start py-2">
+                        <i class="bi bi-trophy text-warning me-2"></i> Manage Tournaments
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a asp-controller="Match" asp-action="Index" class="btn btn-khel-outline w-100 text-start py-2">
+                        <i class="bi bi-calendar-event text-info me-2"></i> Fixtures & Live Scores
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a asp-action="AuditLogs" class="btn btn-khel-outline w-100 text-start py-2">
+                        <i class="bi bi-journal-text text-danger me-2"></i> Audit Trail Records
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a asp-action="Users" class="btn btn-khel-outline w-100 text-start py-2">
+                        <i class="bi bi-person-lines-fill text-success me-2"></i> User & Role Management
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Audit Logs Preview -->
+    <div class="col-lg-5">
+        <div class="khel-card">
+            <div class="khel-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-white mb-0">
+                    <i class="bi bi-shield-check text-success me-2"></i>Audit Governance Stream
+                </h5>
+                <a asp-action="AuditLogs" class="btn btn-xs btn-khel-outline">
+                    Full Log
+                </a>
+            </div>
+
+            <div class="p-3">
+                @if (recentLogs != null && recentLogs.Any())
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var log in recentLogs)
+                        {
+                            <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge-action badge-action-status">@log.Action</span>
+                                    <span class="text-muted" style="font-size: 0.72rem;">@log.TimestampUtc.ToString("g") UTC</span>
+                                </div>
+                                <div class="text-light text-truncate" title="@log.Details">@log.Details</div>
+                                <div class="text-secondary text-truncate" style="font-size: 0.72rem;">By: @(log.UserEmail ?? "System") &bull; IP: @log.IpAddress</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="py-4 text-center text-secondary small">
+                        No audit logs recorded yet.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

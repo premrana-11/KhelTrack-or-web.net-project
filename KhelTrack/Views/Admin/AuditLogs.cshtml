@@ -1,0 +1,154 @@
+@model KhelTrack.Models.ViewModels.AuditLogFilterViewModel
+@{
+    ViewData["Title"] = "Campus Audit Trail Dashboard";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-journal-text me-2 text-danger"></i>Audit Trail & Governance Logs</h2>
+        <p class="text-secondary mb-0">Immutable records of tournament configurations, score updates, team approvals, and administrative actions.</p>
+    </div>
+
+    <a asp-action="Dashboard" class="btn btn-khel-outline">
+        <i class="bi bi-arrow-left me-1"></i> Admin Dashboard
+    </a>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="khel-card p-4 mb-4">
+    <form asp-action="AuditLogs" method="get" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label-khel">Search Keywords</label>
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-khel-control" placeholder="User email, details, IP..." />
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label-khel">Action Type</label>
+            <select name="actionFilter" class="form-select form-khel-control">
+                <option value="">-- All Action Types --</option>
+                @foreach (var act in Model.AvailableActions)
+                {
+                    <!option value="@act" @(Model.ActionFilter == act ? "selected" : "")>@act</!option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label-khel">Entity Type</label>
+            <select name="entityTypeFilter" class="form-select form-khel-control">
+                <option value="">-- All Entities --</option>
+                @foreach (var ent in Model.AvailableEntityTypes)
+                {
+                    <!option value="@ent" @(Model.EntityTypeFilter == ent ? "selected" : "")>@ent</!option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label-khel">From Date</label>
+            <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control form-khel-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label-khel">To Date</label>
+            <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control form-khel-control" />
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <a asp-action="AuditLogs" class="btn btn-khel-outline">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+            </a>
+            <button type="submit" class="btn btn-khel-primary px-4">
+                <i class="bi bi-funnel me-1"></i> Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Logs Count & Table -->
+<div class="khel-card">
+    <div class="khel-card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold text-white mb-0">Audit Records (@Model.Logs.Count)</h5>
+            <span class="text-secondary small">Showing most recent matches (limit 200)</span>
+        </div>
+        <span class="badge bg-secondary bg-opacity-25 text-light font-monospace small">
+            <i class="bi bi-lock me-1 text-success"></i> Tamper-Evident Trail Active
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-khel align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 170px;">Timestamp (UTC)</th>
+                    <th style="width: 160px;">Action</th>
+                    <th style="width: 140px;">Entity</th>
+                    <th style="width: 220px;">Actor / User</th>
+                    <th>Change Details</th>
+                    <th style="width: 120px;">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs.Any())
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        string badgeClass = "badge-action-status";
+                        if (log.Action.Contains("SCORE")) badgeClass = "badge-action-score";
+                        else if (log.Action.Contains("TEAM")) badgeClass = "badge-action-team";
+                        else if (log.Action.Contains("TOURNAMENT")) badgeClass = "badge-action-tourney";
+                        else if (log.Action.Contains("USER")) badgeClass = "badge-action-user";
+                        else if (log.Action.Contains("REJECT")) badgeClass = "badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25";
+
+                        <tr>
+                            <td>
+                                <div class="text-white small fw-bold font-monospace">@log.TimestampUtc.ToString("yyyy-MM-dd")</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">@log.TimestampUtc.ToString("HH:mm:ss") UTC</div>
+                            </td>
+                            <td>
+                                <span class="badge-action @badgeClass">@log.Action</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-dark border border-secondary text-info">
+                                    @log.EntityType #@log.EntityId
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-white small fw-semibold text-truncate" style="max-width: 200px;">
+                                    @(log.UserEmail ?? "System")
+                                </div>
+                                <div class="text-muted text-truncate font-monospace" style="font-size: 0.7rem; max-width: 200px;">
+                                    ID: @(log.UserId ?? "N/A")
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-light small" style="line-height: 1.5;">
+                                    @log.Details
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-25 text-light font-monospace" style="font-size: 0.72rem;">
+                                    @(log.IpAddress ?? "127.0.0.1")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-secondary">
+                            <i class="bi bi-journal-x fs-1 text-muted d-block mb-3"></i>
+                            <h5>No Audit Logs Match The Filter Criteria</h5>
+                            <p class="small">Try resetting your date or action filters.</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

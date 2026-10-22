@@ -1,0 +1,202 @@
+@model KhelTrack.Models.Team
+@{
+    ViewData["Title"] = Model.TeamName + " - Team Profile";
+    var teamMatches = ViewBag.TeamMatches as List<KhelTrack.Models.MatchFixture>;
+}
+
+<!-- Team Header -->
+<div class="khel-card p-4 mb-4">
+    <div class="row align-items-center gy-3">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-secondary bg-opacity-25 text-light fs-6">
+                    <i class="bi bi-building me-1"></i> @Model.Department
+                </span>
+
+                @if (Model.RegistrationStatus == KhelTrack.Models.TeamStatus.Approved)
+                {
+                    <span class="badge badge-completed fs-6"><i class="bi bi-check-circle me-1"></i> Approved</span>
+                }
+                else if (Model.RegistrationStatus == KhelTrack.Models.TeamStatus.Pending)
+                {
+                    <span class="badge badge-pending fs-6"><i class="bi bi-hourglass-split me-1"></i> Pending Approval</span>
+                }
+                else
+                {
+                    <span class="badge badge-rejected fs-6"><i class="bi bi-x-circle me-1"></i> Application Rejected</span>
+                }
+            </div>
+
+            <h2 class="fw-extrabold text-white mb-2">@Model.TeamName</h2>
+            <div class="text-secondary mb-3">
+                <i class="bi bi-trophy text-warning me-1"></i> Competing in:
+                <a asp-controller="Tournament" asp-action="Details" asp-route-id="@Model.TournamentId" class="text-info text-decoration-none fw-semibold">
+                    @Model.Tournament?.Name (@Model.Tournament?.SportType)
+                </a>
+            </div>
+
+            <div class="d-flex flex-wrap gap-4 text-secondary small">
+                <span><i class="bi bi-person-badge text-warning me-1"></i> Team Captain: <strong class="text-white">@(Model.Captain?.FullName ?? "N/A")</strong></span>
+                <span><i class="bi bi-telephone text-success me-1"></i> Contact: <strong class="text-white">@(Model.ContactPhone ?? "Not provided")</strong></span>
+                <span><i class="bi bi-people text-info me-1"></i> Verified Roster: <strong class="text-white">@Model.Players.Count Athletes</strong></span>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-md-end">
+            <div class="d-flex justify-content-md-end gap-2">
+                @if (ViewBag.CanManageRoster == true)
+                {
+                    <a asp-action="ManageRoster" asp-route-id="@Model.Id" class="btn btn-khel-primary">
+                        <i class="bi bi-person-gear me-1"></i> Manage Roster
+                    </a>
+                }
+                <a asp-action="Index" class="btn btn-khel-outline">
+                    Back to Teams
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Player Squad Roster -->
+    <div class="col-lg-8">
+        <div class="khel-card">
+            <div class="khel-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-white mb-0">
+                    <i class="bi bi-person-lines-fill text-info me-2"></i>Official Player Roster
+                </h5>
+                <span class="badge bg-primary bg-opacity-25 text-primary">@Model.Players.Count Active Athletes</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-khel align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Jersey</th>
+                            <th>Athlete Name</th>
+                            <th>Student Roll No</th>
+                            <th>Department</th>
+                            <th>Role / Position</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Players.Any())
+                        {
+                            foreach (var p in Model.Players.OrderBy(p => p.JerseyNumber ?? 999))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge rounded-circle bg-dark border border-secondary text-warning fw-bold d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            @(p.JerseyNumber.HasValue ? p.JerseyNumber.Value.ToString() : "-")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-white">@p.StudentName</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary bg-opacity-25 text-light font-monospace">@p.RollNumber</span>
+                                    </td>
+                                    <td>@p.Department</td>
+                                    <td>
+                                        <span class="text-info fw-semibold">@(string.IsNullOrEmpty(p.Position) ? "Player" : p.Position)</span>
+                                    </td>
+                                    <td class="text-secondary small">
+                                        @(string.IsNullOrEmpty(p.ContactNumber) ? "-" : p.ContactNumber)
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-secondary">
+                                    No players added to this roster yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match History & Schedule for this team -->
+    <div class="col-lg-4">
+        <div class="khel-card p-4">
+            <h5 class="fw-bold text-white mb-3">
+                <i class="bi bi-calendar-event text-warning me-2"></i>Fixtures & Results
+            </h5>
+
+            @if (teamMatches != null && teamMatches.Any())
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var m in teamMatches)
+                    {
+                        bool isTeamA = m.TeamAId == Model.Id;
+                        var opponent = isTeamA ? m.TeamB : m.TeamA;
+                        bool won = m.WinnerTeamId == Model.Id;
+
+                        <div class="p-3 rounded bg-dark border border-secondary border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge @(m.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing ? "badge-live" : (m.MatchStatus == KhelTrack.Models.MatchStatus.Completed ? "badge-completed" : "badge-scheduled"))" style="font-size: 0.7rem;">
+                                    @m.MatchStatus
+                                </span>
+                                <span class="text-secondary small" style="font-size: 0.75rem;">@m.MatchDate.ToString("MMM dd, hh:mm tt")</span>
+                            </div>
+
+                            <div class="fw-bold text-white small my-1">
+                                vs @opponent?.TeamName
+                            </div>
+
+                            @if (m.MatchStatus == KhelTrack.Models.MatchStatus.Completed)
+                            {
+                                <div class="small">
+                                    @if (won)
+                                    {
+                                        <span class="badge bg-success bg-opacity-25 text-success">VICTORY</span>
+                                    }
+                                    else if (m.WinnerTeamId.HasValue)
+                                    {
+                                        <span class="badge bg-danger bg-opacity-25 text-danger">DEFEAT</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-25 text-light">DRAW</span>
+                                    }
+                                    <span class="text-secondary ms-1">Score: @m.TeamAScore - @m.TeamBScore</span>
+                                </div>
+                            }
+                            else if (m.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing)
+                            {
+                                <div class="small text-danger fw-bold">
+                                    Live: @m.TeamAScore - @m.TeamBScore
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted small">
+                                    <i class="bi bi-geo-alt"></i> @m.Ground
+                                </div>
+                            }
+
+                            <div class="text-end mt-2 pt-1 border-top border-secondary border-opacity-25">
+                                <a asp-controller="Match" asp-action="Details" asp-route-id="@m.Id" class="text-info small text-decoration-none">
+                                    Scorecard <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="py-4 text-center text-secondary small">
+                    <i class="bi bi-calendar-x fs-2 text-muted d-block mb-1"></i>
+                    No match fixtures scheduled yet for this team.
+                </div>
+            }
+        </div>
+    </div>
+</div>

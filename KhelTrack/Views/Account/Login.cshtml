@@ -1,0 +1,81 @@
+@model KhelTrack.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Account Log In";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-6 col-lg-5">
+        <div class="khel-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="brand-icon-box mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h3 class="fw-bold text-white mb-1">Welcome Back</h3>
+                <p class="text-secondary small">Log in to manage rosters, track fixtures, or access the admin console.</p>
+            </div>
+
+            <!-- Quick Demo Credentials Box -->
+            <div class="p-3 mb-4 rounded bg-dark border border-secondary border-opacity-50">
+                <div class="small fw-bold text-warning mb-2"><i class="bi bi-key-fill me-1"></i> Quick Demo Fill:</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-xs btn-outline-warning small py-1 px-2" onclick="fillCreds('admin@kheltrack.com', 'Admin@123')">
+                        Admin
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-info small py-1 px-2" onclick="fillCreds('captain1@kheltrack.com', 'Captain@123')">
+                        Captain
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-success small py-1 px-2" onclick="fillCreds('student1@kheltrack.com', 'Student@123')">
+                        Student
+                    </button>
+                </div>
+            </div>
+
+            <form asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label-khel"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Email" id="emailInput" class="form-control form-khel-control" placeholder="name@kheltrack.com" autocomplete="username" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label-khel"></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-lock"></i></span>
+                        <input asp-for="Password" id="passwordInput" class="form-control form-khel-control" placeholder="••••••••" autocomplete="current-password" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4 form-check">
+                    <input asp-for="RememberMe" class="form-check-input bg-dark border-secondary" />
+                    <label asp-for="RememberMe" class="form-check-label text-secondary small"></label>
+                </div>
+
+                <button type="submit" class="btn btn-khel-primary w-100 py-2 fs-6 fw-bold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Log In to KhelTrack
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 text-center text-secondary small">
+                Don't have an account yet?
+                <a asp-action="Register" class="text-warning text-decoration-none fw-semibold ms-1">Register as Captain/Student</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function fillCreds(email, pass) {
+            document.getElementById('emailInput').value = email;
+            document.getElementById('passwordInput').value = pass;
+        }
+    </script>
+}

@@ -1,0 +1,220 @@
+@model KhelTrack.Models.MatchFixture
+@{
+    ViewData["Title"] = $"{Model.TeamA?.TeamName} vs {Model.TeamB?.TeamName} - Match Scorecard";
+}
+
+<div class="khel-card p-4 p-md-5 mb-4 position-relative overflow-hidden">
+    <div class="hero-glow-blob" style="opacity: 0.15;"></div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 me-2">
+                @Model.Tournament?.SportType
+            </span>
+            <span class="text-secondary small">
+                <i class="bi bi-trophy text-warning me-1"></i> @Model.Tournament?.Name &bull; @Model.RoundName
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            @if (Model.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing)
+            {
+                <span class="badge-live fs-6"><span class="live-dot"></span> LIVE ONGOING</span>
+            }
+            else if (Model.MatchStatus == KhelTrack.Models.MatchStatus.Completed)
+            {
+                <span class="badge badge-completed fs-6"><i class="bi bi-check-circle me-1"></i> Match Completed</span>
+            }
+            else
+            {
+                <span class="badge badge-scheduled fs-6"><i class="bi bi-clock me-1"></i> Scheduled</span>
+            }
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="UpdateScore" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning ms-2">
+                    <i class="bi bi-pencil-square me-1"></i> Update Score
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Central Scoreboard -->
+    <div class="row align-items-center py-4 my-2 text-center">
+        <!-- Team A -->
+        <div class="col-md-5">
+            <h2 class="fw-extrabold text-white mb-1">
+                @Model.TeamA?.TeamName
+                @if (Model.WinnerTeamId == Model.TeamAId)
+                {
+                    <i class="bi bi-trophy-fill text-warning fs-4 ms-1" title="Winner"></i>
+                }
+            </h2>
+            <div class="text-secondary mb-3">@Model.TeamA?.Department</div>
+            <div class="display-5 fw-bold text-info">
+                @(Model.TeamAScore ?? "-")
+            </div>
+            @if (Model.WinnerTeamId == Model.TeamAId)
+            {
+                <span class="badge bg-warning text-dark fw-bold mt-2 px-3 py-1">WINNER</span>
+            }
+        </div>
+
+        <!-- Center VS / Status -->
+        <div class="col-md-2 my-3 my-md-0">
+            <div class="p-2 rounded-circle bg-dark border border-secondary border-opacity-50 d-inline-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+                <span class="fw-bold text-muted">VS</span>
+            </div>
+            <div class="text-muted small mt-2">
+                @Model.MatchDate.ToString("ddd, dd MMM")<br />
+                @Model.MatchDate.ToString("hh:mm tt")
+            </div>
+        </div>
+
+        <!-- Team B -->
+        <div class="col-md-5">
+            <h2 class="fw-extrabold text-white mb-1">
+                @Model.TeamB?.TeamName
+                @if (Model.WinnerTeamId == Model.TeamBId)
+                {
+                    <i class="bi bi-trophy-fill text-warning fs-4 ms-1" title="Winner"></i>
+                }
+            </h2>
+            <div class="text-secondary mb-3">@Model.TeamB?.Department</div>
+            <div class="display-5 fw-bold text-info">
+                @(Model.TeamBScore ?? "-")
+            </div>
+            @if (Model.WinnerTeamId == Model.TeamBId)
+            {
+                <span class="badge bg-warning text-dark fw-bold mt-2 px-3 py-1">WINNER</span>
+            }
+        </div>
+    </div>
+
+    <!-- Match Highlights / Ground Details -->
+    <div class="p-3 mt-3 rounded bg-dark border border-secondary border-opacity-25">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small">
+            <div>
+                <i class="bi bi-geo-alt-fill text-danger me-1"></i> Venue: <strong class="text-white">@Model.Ground</strong>
+            </div>
+            <div>
+                <i class="bi bi-clock-history text-secondary me-1"></i> Last Updated: <span class="text-secondary">@Model.UpdatedAt.ToString("g") UTC</span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.HighlightsSummary))
+        {
+            <div class="mt-2 pt-2 border-top border-secondary border-opacity-25 text-info">
+                <strong><i class="bi bi-stars text-warning me-1"></i> Highlights & Key Notes:</strong>
+                <span class="text-light ms-1">@Model.HighlightsSummary</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Team Squad Lineups -->
+<div class="row g-4 mb-4">
+    <!-- Team A Squad -->
+    <div class="col-md-6">
+        <div class="khel-card">
+            <div class="khel-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-white mb-0">@Model.TeamA?.TeamName Squad</h5>
+                <span class="badge bg-secondary bg-opacity-25 text-light">@(Model.TeamA?.Players?.Count ?? 0) Players</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-khel align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Student Athlete</th>
+                            <th>Roll No</th>
+                            <th>Role / Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TeamA?.Players != null && Model.TeamA.Players.Any())
+                        {
+                            foreach (var p in Model.TeamA.Players.OrderBy(p => p.JerseyNumber ?? 999))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge rounded-circle bg-dark border border-secondary text-warning fw-bold d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px;">
+                                            @(p.JerseyNumber.HasValue ? p.JerseyNumber.Value.ToString() : "-")
+                                        </span>
+                                    </td>
+                                    <td class="text-white fw-semibold">@p.StudentName</td>
+                                    <td><span class="badge bg-secondary bg-opacity-25 text-light font-monospace">@p.RollNumber</span></td>
+                                    <td class="text-info">@(string.IsNullOrEmpty(p.Position) ? "Squad" : p.Position)</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="text-center text-secondary py-3">No roster players listed.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team B Squad -->
+    <div class="col-md-6">
+        <div class="khel-card">
+            <div class="khel-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-white mb-0">@Model.TeamB?.TeamName Squad</h5>
+                <span class="badge bg-secondary bg-opacity-25 text-light">@(Model.TeamB?.Players?.Count ?? 0) Players</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-khel align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Student Athlete</th>
+                            <th>Roll No</th>
+                            <th>Role / Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TeamB?.Players != null && Model.TeamB.Players.Any())
+                        {
+                            foreach (var p in Model.TeamB.Players.OrderBy(p => p.JerseyNumber ?? 999))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge rounded-circle bg-dark border border-secondary text-warning fw-bold d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px;">
+                                            @(p.JerseyNumber.HasValue ? p.JerseyNumber.Value.ToString() : "-")
+                                        </span>
+                                    </td>
+                                    <td class="text-white fw-semibold">@p.StudentName</td>
+                                    <td><span class="badge bg-secondary bg-opacity-25 text-light font-monospace">@p.RollNumber</span></td>
+                                    <td class="text-info">@(string.IsNullOrEmpty(p.Position) ? "Squad" : p.Position)</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="text-center text-secondary py-3">No roster players listed.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center">
+    <a asp-action="Index" asp-route-tournamentId="@Model.TournamentId" class="btn btn-khel-outline">
+        <i class="bi bi-arrow-left me-1"></i> Back to Fixtures
+    </a>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Permanently remove this match fixture?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete Fixture
+            </button>
+        </form>
+    }
+</div>

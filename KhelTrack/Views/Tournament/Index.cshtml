@@ -1,0 +1,175 @@
+@model IEnumerable<KhelTrack.Models.Tournament>
+@{
+    ViewData["Title"] = "College Tournaments";
+    var sportsList = ViewBag.SportsList as List<string>;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-trophy-fill me-2 text-warning"></i>College Tournaments</h2>
+        <p class="text-secondary mb-0">Explore upcoming, active, and completed inter-departmental athletic championships.</p>
+    </div>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-khel-primary">
+            <i class="bi bi-plus-circle me-1"></i> Create Tournament
+        </a>
+    }
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="khel-card p-3 mb-4">
+    <form asp-action="Index" method="get" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control form-khel-control" placeholder="Search by name, sport, or campus ground..." />
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <select name="sport" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Sports --</option>
+                @if (sportsList != null)
+                {
+                    foreach (var s in sportsList)
+                    {
+                        <!option value="@s" @(ViewBag.SelectedSport == s ? "selected" : "")>@s</!option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="status" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Statuses --</option>
+                <!option value="Upcoming" @(ViewBag.SelectedStatus?.ToString() == "Upcoming" ? "selected" : "")>Upcoming</!option>
+                <!option value="Active" @(ViewBag.SelectedStatus?.ToString() == "Active" ? "selected" : "")>Active</!option>
+                <!option value="Completed" @(ViewBag.SelectedStatus?.ToString() == "Completed" ? "selected" : "")>Completed</!option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-khel-primary w-100">
+                Filter
+            </button>
+            <a asp-action="Index" class="btn btn-khel-outline">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tournaments Grid -->
+<div class="row g-4">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <div class="col-lg-4 col-md-6">
+                <div class="khel-card h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- Header with Sport Tag & Status -->
+                        <div class="khel-card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 fw-bold">
+                                @item.SportType
+                            </span>
+
+                            @if (item.Status == KhelTrack.Models.TournamentStatus.Active)
+                            {
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">
+                                    <span class="live-dot d-inline-block me-1"></span> Active
+                                </span>
+                            }
+                            else if (item.Status == KhelTrack.Models.TournamentStatus.Upcoming)
+                            {
+                                <span class="badge badge-scheduled">Upcoming</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary bg-opacity-25 text-light">Completed</span>
+                            }
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-3">
+                            <h5 class="fw-bold text-white mb-2">@item.Name</h5>
+                            <p class="text-secondary small mb-3" style="min-height: 40px;">
+                                @(string.IsNullOrEmpty(item.Description) ? "Intra-college championship event." : item.Description)
+                            </p>
+
+                            <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 mb-3 small">
+                                <div class="d-flex justify-content-between text-secondary mb-1">
+                                    <span><i class="bi bi-calendar3 me-1 text-info"></i> Timeline:</span>
+                                    <span class="text-white">@item.StartDate.ToString("MMM dd") - @item.EndDate.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-secondary mb-1">
+                                    <span><i class="bi bi-geo-alt me-1 text-danger"></i> Venue:</span>
+                                    <span class="text-white text-truncate" style="max-width: 170px;">@item.Venue</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-secondary">
+                                    <span><i class="bi bi-shield-shaded me-1 text-warning"></i> Capacity:</span>
+                                    <span class="text-white">@(item.Teams?.Count ?? 0) / @item.MaxTeams Teams</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer Actions -->
+                    <div class="p-3 pt-0 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-khel-primary">
+                                Tournament Hub
+                            </a>
+                            @if (item.Status != KhelTrack.Models.TournamentStatus.Completed)
+                            {
+                                <a asp-controller="Team" asp-action="Register" asp-route-tournamentId="@item.Id" class="btn btn-sm btn-khel-accent" title="Register Team">
+                                    <i class="bi bi-person-plus me-1"></i> Register
+                                </a>
+                            }
+                        </div>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-khel-outline px-2" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end border-secondary">
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id"><i class="bi bi-pencil me-2 text-warning"></i> Edit</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Match" asp-action="Create" asp-route-tournamentId="@item.Id"><i class="bi bi-calendar-plus me-2 text-info"></i> Add Fixture</a></li>
+                                    <li><hr class="dropdown-divider border-secondary" /></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Are you sure you want to remove this tournament?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="bi bi-trash me-2"></i> Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="khel-card p-5 text-center text-secondary">
+                <i class="bi bi-trophy fs-1 text-muted d-block mb-3"></i>
+                <h5>No Tournaments Found</h5>
+                <p class="small">Try clearing search filters or create a new tournament in the admin console.</p>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-action="Create" class="btn btn-sm btn-khel-primary mt-2">
+                        Create First Tournament
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</div>

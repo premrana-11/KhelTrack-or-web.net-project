@@ -1,0 +1,157 @@
+@model IEnumerable<KhelTrack.Models.MatchFixture>
+@{
+    ViewData["Title"] = "Match Fixtures & Live Scores";
+    var tournaments = ViewBag.Tournaments as List<KhelTrack.Models.Tournament>;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-calendar-event me-2 text-info"></i>Match Fixtures & Live Scores</h2>
+        <p class="text-secondary mb-0">Follow collegiate sports matches, ongoing live scores, grounds, and final scorecards.</p>
+    </div>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="btn btn-khel-primary">
+            <i class="bi bi-calendar-plus me-1"></i> Schedule Fixture
+        </a>
+    }
+</div>
+
+<!-- Filters -->
+<div class="khel-card p-3 mb-4">
+    <form asp-action="Index" method="get" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <select name="tournamentId" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Tournaments --</option>
+                @if (tournaments != null)
+                {
+                    foreach (var t in tournaments)
+                    {
+                        <!option value="@t.Id" @(ViewBag.SelectedTournamentId == t.Id ? "selected" : "")>@t.Name (@t.SportType)</!option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <select name="status" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Match Statuses --</option>
+                <!option value="Ongoing" @(ViewBag.SelectedStatus?.ToString() == "Ongoing" ? "selected" : "")>Ongoing / Live</!option>
+                <!option value="Scheduled" @(ViewBag.SelectedStatus?.ToString() == "Scheduled" ? "selected" : "")>Scheduled</!option>
+                <!option value="Completed" @(ViewBag.SelectedStatus?.ToString() == "Completed" ? "selected" : "")>Completed</!option>
+            </select>
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-khel-primary w-100">Filter</button>
+            <a asp-action="Index" class="btn btn-khel-outline"><i class="bi bi-x-lg"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Fixtures List -->
+<div class="row g-3">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <div class="col-lg-6">
+                <div class="match-card @(item.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing ? "border-danger border-opacity-50" : "")">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            @if (item.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing)
+                            {
+                                <span class="badge-live"><span class="live-dot"></span> LIVE</span>
+                            }
+                            else if (item.MatchStatus == KhelTrack.Models.MatchStatus.Completed)
+                            {
+                                <span class="badge badge-completed"><i class="bi bi-check-circle me-1"></i> Completed</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-scheduled"><i class="bi bi-clock me-1"></i> Scheduled</span>
+                            }
+
+                            <span class="badge bg-secondary bg-opacity-25 text-light">@item.RoundName</span>
+                        </div>
+                        <span class="text-secondary small">
+                            @item.MatchDate.ToString("ddd, MMM dd - hh:mm tt")
+                        </span>
+                    </div>
+
+                    <div class="row align-items-center py-2 text-center text-md-start">
+                        <div class="col-md-5">
+                            <div class="team-name-lg @(item.WinnerTeamId == item.TeamAId ? "text-warning" : "")">
+                                @if (item.WinnerTeamId == item.TeamAId)
+                                {
+                                    <i class="bi bi-trophy-fill text-warning me-1"></i>
+                                }
+                                @item.TeamA?.TeamName
+                            </div>
+                            <div class="text-secondary small">@item.TeamA?.Department</div>
+                        </div>
+
+                        <div class="col-md-2 text-center my-2 my-md-0">
+                            @if (item.MatchStatus == KhelTrack.Models.MatchStatus.Completed || item.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing)
+                            {
+                                <div class="score-display">
+                                    @(item.TeamAScore ?? "0") - @(item.TeamBScore ?? "0")
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="badge bg-dark border border-secondary text-secondary px-3 py-2">VS</span>
+                            }
+                        </div>
+
+                        <div class="col-md-5 text-md-end">
+                            <div class="team-name-lg @(item.WinnerTeamId == item.TeamBId ? "text-warning" : "")">
+                                @item.TeamB?.TeamName
+                                @if (item.WinnerTeamId == item.TeamBId)
+                                {
+                                    <i class="bi bi-trophy-fill text-warning ms-1"></i>
+                                }
+                            </div>
+                            <div class="text-secondary small">@item.TeamB?.Department</div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(item.HighlightsSummary))
+                    {
+                        <div class="mt-2 py-1 px-2 rounded bg-dark border border-secondary border-opacity-25 text-info small">
+                            <i class="bi bi-stars text-warning me-1"></i> @item.HighlightsSummary
+                        </div>
+                    }
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-25 gap-2">
+                        <div class="text-muted small">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i> @item.Ground | <span class="text-info">@item.Tournament?.Name</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-action="UpdateScore" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil-square me-1"></i> Score
+                                </a>
+                            }
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-khel-outline">
+                                Scorecard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="khel-card p-5 text-center text-secondary">
+                <i class="bi bi-calendar-x fs-1 text-muted d-block mb-3"></i>
+                <h5>No Match Fixtures Match Your Query</h5>
+                <p class="small">Try clearing filters or check the tournament schedule.</p>
+            </div>
+        </div>
+    }
+</div>

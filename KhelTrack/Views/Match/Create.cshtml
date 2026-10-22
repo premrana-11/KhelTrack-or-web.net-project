@@ -1,0 +1,110 @@
+@model KhelTrack.Models.ViewModels.CreateMatchFixtureViewModel
+@{
+    ViewData["Title"] = "Schedule Match Fixture";
+}
+
+<div class="row justify-content-center py-3">
+    <div class="col-lg-8">
+        <div class="khel-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold text-white mb-1"><i class="bi bi-calendar-plus text-info me-2"></i>Schedule Match Fixture</h3>
+                    <p class="text-secondary small mb-0">Select participating teams, round, and match ground.</p>
+                </div>
+                <a asp-action="Index" class="btn btn-sm btn-khel-outline">
+                    <i class="bi bi-arrow-left me-1"></i> Cancel
+                </a>
+            </div>
+
+            <form asp-action="Create" method="post" id="createMatchForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                        <label asp-for="TournamentId" class="form-label-khel"></label>
+                        <select asp-for="TournamentId" asp-items="Model.TournamentsList" id="tournamentSelect" class="form-select form-khel-control"></select>
+                        <span asp-validation-for="TournamentId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label asp-for="RoundName" class="form-label-khel"></label>
+                        <input asp-for="RoundName" class="form-control form-khel-control" placeholder="e.g. Semi-Final / Group Stage" />
+                        <span asp-validation-for="RoundName" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="TeamAId" class="form-label-khel"></label>
+                        <select asp-for="TeamAId" asp-items="Model.TeamsList" id="teamASelect" class="form-select form-khel-control">
+                            <option value="">-- Choose Team A --</option>
+                        </select>
+                        <span asp-validation-for="TeamAId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TeamBId" class="form-label-khel"></label>
+                        <select asp-for="TeamBId" asp-items="Model.TeamsList" id="teamBSelect" class="form-select form-khel-control">
+                            <option value="">-- Choose Team B --</option>
+                        </select>
+                        <span asp-validation-for="TeamBId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="MatchDate" class="form-label-khel"></label>
+                        <input asp-for="MatchDate" type="datetime-local" class="form-control form-khel-control" />
+                        <span asp-validation-for="MatchDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Ground" class="form-label-khel"></label>
+                        <input asp-for="Ground" class="form-control form-khel-control" placeholder="e.g. University Cricket Oval / Turf 1" />
+                        <span asp-validation-for="Ground" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-khel-outline">Cancel</a>
+                    <button type="submit" class="btn btn-khel-primary px-4 fw-bold">
+                        <i class="bi bi-calendar-check me-1"></i> Save & Schedule Match
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('tournamentSelect').addEventListener('change', function () {
+            var tourneyId = this.value;
+            if (!tourneyId) return;
+
+            fetch(`/Match/GetTeamsByTournament?tournamentId=${tourneyId}`)
+                .then(res => res.json())
+                .then(teams => {
+                    var selectA = document.getElementById('teamASelect');
+                    var selectB = document.getElementById('teamBSelect');
+                    selectA.innerHTML = '<option value="">-- Choose Team A --</option>';
+                    selectB.innerHTML = '<option value="">-- Choose Team B --</option>';
+
+                    teams.forEach(t => {
+                        var optA = document.createElement('option');
+                        optA.value = t.id;
+                        optA.textContent = `${t.name} (${t.dept})`;
+                        selectA.appendChild(optA);
+
+                        var optB = document.createElement('option');
+                        optB.value = t.id;
+                        optB.textContent = `${t.name} (${t.dept})`;
+                        selectB.appendChild(optB);
+                    });
+                })
+                .catch(err => console.error("Error loading teams:", err));
+        });
+    </script>
+}

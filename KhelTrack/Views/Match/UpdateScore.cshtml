@@ -1,0 +1,100 @@
+@model KhelTrack.Models.ViewModels.MatchScoreUpdateViewModel
+@{
+    ViewData["Title"] = $"Update Score - {Model.TeamAName} vs {Model.TeamBName}";
+}
+
+<div class="row justify-content-center py-3">
+    <div class="col-lg-8">
+        <div class="khel-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold text-white mb-1"><i class="bi bi-pencil-square text-warning me-2"></i>Enter / Update Match Score</h3>
+                    <p class="text-secondary small mb-0">@Model.TournamentName &bull; @Model.RoundName</p>
+                </div>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-khel-outline">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Scorecard
+                </a>
+            </div>
+
+            <!-- Current Match Summary Box -->
+            <div class="p-3 mb-4 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                <div class="d-flex justify-content-around align-items-center">
+                    <div>
+                        <div class="fs-5 fw-bold text-white">@Model.TeamAName</div>
+                        <span class="text-secondary small">Team A</span>
+                    </div>
+                    <span class="badge bg-secondary bg-opacity-25 text-secondary px-3 py-1">VS</span>
+                    <div>
+                        <div class="fs-5 fw-bold text-white">@Model.TeamBName</div>
+                        <span class="text-secondary small">Team B</span>
+                    </div>
+                </div>
+                <div class="text-muted small mt-2">
+                    <i class="bi bi-geo-alt"></i> @Model.Ground &bull; @Model.MatchDate.ToString("ddd, dd MMM - hh:mm tt")
+                </div>
+            </div>
+
+            <form asp-action="UpdateScore" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="TournamentId" />
+                <input type="hidden" asp-for="TeamAId" />
+                <input type="hidden" asp-for="TeamBId" />
+                <input type="hidden" asp-for="TeamAName" />
+                <input type="hidden" asp-for="TeamBName" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="TeamAScore" class="form-label-khel">@Model.TeamAName Score</label>
+                        <input asp-for="TeamAScore" class="form-control form-khel-control form-control-lg text-center fw-bold" placeholder="e.g. 186/4 or 3" />
+                        <span asp-validation-for="TeamAScore" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TeamBScore" class="form-label-khel">@Model.TeamBName Score</label>
+                        <input asp-for="TeamBScore" class="form-control form-khel-control form-control-lg text-center fw-bold" placeholder="e.g. 172/9 or 1" />
+                        <span asp-validation-for="TeamBScore" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="MatchStatus" class="form-label-khel"></label>
+                        <select asp-for="MatchStatus" class="form-select form-khel-control">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Ongoing">Live / Ongoing</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Postponed">Postponed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <span asp-validation-for="MatchStatus" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="WinnerTeamId" class="form-label-khel"></label>
+                        <select asp-for="WinnerTeamId" asp-items="Model.TeamsForWinnerList" class="form-select form-khel-control"></select>
+                        <span asp-validation-for="WinnerTeamId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="HighlightsSummary" class="form-label-khel"></label>
+                    <textarea asp-for="HighlightsSummary" rows="3" class="form-control form-khel-control" placeholder="Match notes, winning margin, top performers (e.g. Aarav scored 68 off 39 balls, player of the match)..."></textarea>
+                    <span asp-validation-for="HighlightsSummary" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-khel-outline">Cancel</a>
+                    <button type="submit" class="btn btn-khel-primary px-4 fw-bold">
+                        <i class="bi bi-check-circle me-1"></i> Save Score & Log Audit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

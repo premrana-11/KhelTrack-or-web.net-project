@@ -1,0 +1,67 @@
+@model IEnumerable<KhelTrack.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "User & Role Directory";
+    var userRoleMap = ViewBag.UserRoles as Dictionary<string, IList<string>>;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-person-lines-fill me-2 text-success"></i>User & Role Directory</h2>
+        <p class="text-secondary mb-0">Overview of registered students, team captains, and sports committee administrators.</p>
+    </div>
+
+    <a asp-action="Dashboard" class="btn btn-khel-outline">
+        <i class="bi bi-arrow-left me-1"></i> Admin Dashboard
+    </a>
+</div>
+
+<div class="khel-card">
+    <div class="table-responsive">
+        <table class="table table-khel align-middle">
+            <thead>
+                <tr>
+                    <th>User / Athlete</th>
+                    <th>Roll Number</th>
+                    <th>Department</th>
+                    <th>Role(s)</th>
+                    <th>Teams Led</th>
+                    <th>Registered At</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-white">@user.FullName</div>
+                            <div class="text-secondary small">@user.Email</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary bg-opacity-25 text-light font-monospace">@user.CollegeRollNo</span>
+                        </td>
+                        <td>@user.Department</td>
+                        <td>
+                            @if (userRoleMap != null && userRoleMap.ContainsKey(user.Id))
+                            {
+                                foreach (var role in userRoleMap[user.Id])
+                                {
+                                    <span class="badge @(role == "Admin" ? "bg-danger" : (role == "Captain" ? "bg-warning text-dark" : "bg-info")) me-1">
+                                        @role
+                                    </span>
+                                }
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-dark border border-secondary text-info">
+                                @(user.CaptainedTeams?.Count ?? 0) Teams
+                            </span>
+                        </td>
+                        <td class="text-secondary small">
+                            @user.RegisteredAt.ToString("MMM dd, yyyy")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

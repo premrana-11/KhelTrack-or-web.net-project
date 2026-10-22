@@ -1,0 +1,165 @@
+@model IEnumerable<KhelTrack.Models.MatchFixture>
+@{
+    ViewData["Title"] = "Campus Sports Schedule & Fixtures";
+    var tournaments = ViewBag.Tournaments as List<KhelTrack.Models.Tournament>;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-calendar-week me-2 text-info"></i>Match Schedule & Fixtures</h2>
+        <p class="text-secondary mb-0">Browse real-time match fixtures, grounds, ongoing scores, and completed results.</p>
+    </div>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-controller="Match" asp-action="Create" class="btn btn-khel-primary">
+            <i class="bi bi-plus-circle me-1"></i> Schedule New Fixture
+        </a>
+    }
+</div>
+
+<!-- Filter Bar -->
+<div class="khel-card p-3 mb-4">
+    <form asp-controller="Home" asp-action="Schedule" method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <label class="form-label-khel">Filter Tournament</label>
+            <select name="tournamentId" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Tournaments --</option>
+                @if (tournaments != null)
+                {
+                    foreach (var t in tournaments)
+                    {
+                        <!option value="@t.Id" @(ViewBag.SelectedTournamentId == t.Id ? "selected" : "")>@t.Name (@t.SportType)</!option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label-khel">Sport Category</label>
+            <select name="sport" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Sports --</option>
+                <!option value="Cricket" @(ViewBag.SelectedSport == "Cricket" ? "selected" : "")>Cricket</!option>
+                <!option value="Football" @(ViewBag.SelectedSport == "Football" ? "selected" : "")>Football</!option>
+                <!option value="Badminton" @(ViewBag.SelectedSport == "Badminton" ? "selected" : "")>Badminton</!option>
+                <!option value="Basketball" @(ViewBag.SelectedSport == "Basketball" ? "selected" : "")>Basketball</!option>
+                <!option value="Volleyball" @(ViewBag.SelectedSport == "Volleyball" ? "selected" : "")>Volleyball</!option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label-khel">Status</label>
+            <select name="status" class="form-select form-khel-control" onchange="this.form.submit()">
+                <option value="">-- All Statuses --</option>
+                <!option value="Scheduled" @(ViewBag.SelectedStatus?.ToString() == "Scheduled" ? "selected" : "")>Scheduled</!option>
+                <!option value="Ongoing" @(ViewBag.SelectedStatus?.ToString() == "Ongoing" ? "selected" : "")>Live / Ongoing</!option>
+                <!option value="Completed" @(ViewBag.SelectedStatus?.ToString() == "Completed" ? "selected" : "")>Completed</!option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <a asp-action="Schedule" class="btn btn-khel-outline w-100">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Fixtures List -->
+<div class="row g-3">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <div class="col-lg-6">
+                <div class="match-card @(item.MatchStatus == MatchStatus.Ongoing ? "border-danger border-opacity-50" : "")">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            @if (item.MatchStatus == MatchStatus.Ongoing)
+                            {
+                                <span class="badge-live"><span class="live-dot"></span> LIVE</span>
+                            }
+                            else if (item.MatchStatus == MatchStatus.Completed)
+                            {
+                                <span class="badge badge-completed"><i class="bi bi-check-circle me-1"></i> Completed</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-scheduled"><i class="bi bi-clock me-1"></i> Scheduled</span>
+                            }
+
+                            <span class="badge bg-secondary bg-opacity-25 text-light">@item.RoundName</span>
+                        </div>
+                        <span class="text-secondary small">
+                            <i class="bi bi-calendar3 me-1"></i>@item.MatchDate.ToString("ddd, dd MMM yyyy - hh:mm tt")
+                        </span>
+                    </div>
+
+                    <div class="row align-items-center py-2 text-center text-md-start">
+                        <div class="col-md-5">
+                            <div class="team-name-lg @(item.WinnerTeamId == item.TeamAId ? "text-warning" : "")">
+                                @if (item.WinnerTeamId == item.TeamAId)
+                                {
+                                    <i class="bi bi-trophy-fill text-warning me-1"></i>
+                                }
+                                @item.TeamA?.TeamName
+                            </div>
+                            <div class="text-secondary small">@item.TeamA?.Department</div>
+                        </div>
+
+                        <div class="col-md-2 text-center my-2 my-md-0">
+                            @if (item.MatchStatus == MatchStatus.Completed || item.MatchStatus == MatchStatus.Ongoing)
+                            {
+                                <div class="score-display">
+                                    @(item.TeamAScore ?? "0") - @(item.TeamBScore ?? "0")
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="badge bg-dark border border-secondary text-secondary px-3 py-2">VS</span>
+                            }
+                        </div>
+
+                        <div class="col-md-5 text-md-end">
+                            <div class="team-name-lg @(item.WinnerTeamId == item.TeamBId ? "text-warning" : "")">
+                                @item.TeamB?.TeamName
+                                @if (item.WinnerTeamId == item.TeamBId)
+                                {
+                                    <i class="bi bi-trophy-fill text-warning ms-1"></i>
+                                }
+                            </div>
+                            <div class="text-secondary small">@item.TeamB?.Department</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-25 gap-2">
+                        <div class="text-muted small">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i> @item.Ground | <span class="text-info">@item.Tournament?.Name</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Match" asp-action="UpdateScore" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil-square me-1"></i> Update Score
+                                </a>
+                            }
+                            <a asp-controller="Match" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-khel-outline">
+                                Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="khel-card p-5 text-center text-secondary">
+                <i class="bi bi-calendar-x fs-1 text-muted d-block mb-3"></i>
+                <h5>No Match Fixtures Found</h5>
+                <p class="small">Try adjusting your filters or check back later for scheduled campus games.</p>
+            </div>
+        </div>
+    }
+</div>

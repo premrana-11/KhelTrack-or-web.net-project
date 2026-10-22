@@ -1,0 +1,391 @@
+@model KhelTrack.Models.ViewModels.TournamentDetailsViewModel
+@{
+    ViewData["Title"] = Model.Tournament.Name;
+}
+
+<!-- Tournament Header Banner -->
+<div class="khel-card p-4 mb-4">
+    <div class="row align-items-center gy-3">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 fs-6 px-3 py-1">
+                    @Model.Tournament.SportType
+                </span>
+                @if (Model.Tournament.Status == KhelTrack.Models.TournamentStatus.Active)
+                {
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">
+                        <span class="live-dot d-inline-block me-1"></span> Active Season
+                    </span>
+                }
+                else if (Model.Tournament.Status == KhelTrack.Models.TournamentStatus.Upcoming)
+                {
+                    <span class="badge badge-scheduled">Upcoming</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary bg-opacity-25 text-light">Completed</span>
+                }
+            </div>
+
+            <h2 class="fw-extrabold text-white mb-2">@Model.Tournament.Name</h2>
+            <p class="text-secondary mb-3">@Model.Tournament.Description</p>
+
+            <div class="d-flex flex-wrap gap-4 text-secondary small">
+                <span><i class="bi bi-geo-alt-fill text-danger me-1"></i> Venue: <strong class="text-white">@Model.Tournament.Venue</strong></span>
+                <span><i class="bi bi-calendar3 text-info me-1"></i> Timeline: <strong class="text-white">@Model.Tournament.StartDate.ToString("MMM dd") - @Model.Tournament.EndDate.ToString("MMM dd, yyyy")</strong></span>
+                <span><i class="bi bi-shield-shaded text-warning me-1"></i> Teams: <strong class="text-white">@Model.Teams.Count / @Model.Tournament.MaxTeams</strong></span>
+            </div>
+        </div>
+
+        <div class="col-md-4 text-md-end">
+            <div class="d-flex flex-column flex-sm-row justify-content-md-end gap-2">
+                @if (Model.Tournament.Status != KhelTrack.Models.TournamentStatus.Completed)
+                {
+                    @if (Model.IsUserCaptainRegistered)
+                    {
+                        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 p-2 text-start">
+                            <i class="bi bi-check2-circle me-1"></i> Your Team Registered: <strong>@Model.UserTeam?.TeamName</strong> (@Model.UserTeam?.RegistrationStatus)
+                        </span>
+                    }
+                    else
+                    {
+                        <a asp-controller="Team" asp-action="Register" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-khel-accent">
+                            <i class="bi bi-person-plus-fill me-1"></i> Register Team
+                        </a>
+                    }
+                }
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Match" asp-action="Create" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-khel-primary">
+                        <i class="bi bi-calendar-plus me-1"></i> Add Match
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.Tournament.Id" class="btn btn-khel-outline">
+                        <i class="bi bi-pencil me-1"></i> Edit
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Tabs -->
+<ul class="nav nav-pills gap-2 mb-4" id="tournamentTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-khel-outline active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab">
+            <i class="bi bi-info-circle me-1"></i> Overview & Rules
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-khel-outline" id="teams-tab" data-bs-toggle="pill" data-bs-target="#teams" type="button" role="tab">
+            <i class="bi bi-people me-1"></i> Registered Teams (@Model.Teams.Count)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-khel-outline" id="fixtures-tab" data-bs-toggle="pill" data-bs-target="#fixtures" type="button" role="tab">
+            <i class="bi bi-calendar-week me-1"></i> Fixtures & Results (@Model.Matches.Count)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="btn btn-khel-outline" id="standings-tab" data-bs-toggle="pill" data-bs-target="#standings" type="button" role="tab">
+            <i class="bi bi-bar-chart-line me-1"></i> Points Table
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Contents -->
+<div class="tab-content" id="tournamentTabsContent">
+    <!-- Tab 1: Overview & Rules -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="khel-card p-4 mb-4">
+                    <h5 class="fw-bold text-white mb-3"><i class="bi bi-file-earmark-text text-warning me-2"></i>Official Tournament Rules & Guidelines</h5>
+                    <div class="p-3 rounded bg-dark border border-secondary border-opacity-25 text-light" style="line-height: 1.7;">
+                        @(string.IsNullOrEmpty(Model.Tournament.Rules) ? "Standard collegiate athletic guidelines and sportsmanship rules apply. All roster athletes must carry valid college student ID cards." : Model.Tournament.Rules)
+                    </div>
+                </div>
+
+                <div class="khel-card p-4">
+                    <h5 class="fw-bold text-white mb-3"><i class="bi bi-check-all text-success me-2"></i>Eligibility & Equipment Requirements</h5>
+                    <ul class="text-secondary small mb-0 d-flex flex-column gap-2">
+                        <li>Each departmental team must have an approved roster submitted by the registered captain.</li>
+                        <li>Only verified collegiate students enrolled in the designated branch are eligible for roster inclusion.</li>
+                        <li>Referees/Umpires maintain full authority on match proceedings; score updates are committed to the official audit log.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="khel-card p-4">
+                    <h5 class="fw-bold text-white mb-3">Key Details</h5>
+                    <div class="d-flex flex-column gap-3 small">
+                        <div>
+                            <span class="text-secondary d-block">Sport Category:</span>
+                            <span class="text-white fw-bold">@Model.Tournament.SportType</span>
+                        </div>
+                        <div>
+                            <span class="text-secondary d-block">Tournament Venue:</span>
+                            <span class="text-white fw-bold">@Model.Tournament.Venue</span>
+                        </div>
+                        <div>
+                            <span class="text-secondary d-block">Duration:</span>
+                            <span class="text-white fw-bold">@Model.Tournament.StartDate.ToString("dd MMM yyyy") to @Model.Tournament.EndDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                        <div>
+                            <span class="text-secondary d-block">Roster Team Limit:</span>
+                            <span class="text-white fw-bold">@Model.Tournament.MaxTeams Teams</span>
+                        </div>
+                        <div>
+                            <span class="text-secondary d-block">Status:</span>
+                            <span class="text-white fw-bold">@Model.Tournament.Status</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Registered Teams -->
+    <div class="tab-pane fade" id="teams" role="tabpanel">
+        <div class="row g-3">
+            @if (Model.Teams.Any())
+            {
+                foreach (var team in Model.Teams)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="khel-card p-3 h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="fw-bold text-white mb-0">@team.TeamName</h5>
+                                    @if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Approved)
+                                    {
+                                        <span class="badge badge-completed">Approved</span>
+                                    }
+                                    else if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Pending)
+                                    {
+                                        <span class="badge badge-pending">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-rejected">Rejected</span>
+                                    }
+                                </div>
+                                <div class="text-secondary small mb-3">
+                                    <span class="badge bg-dark border border-secondary text-secondary">@team.Department</span>
+                                </div>
+
+                                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small mb-3">
+                                    <div class="text-secondary mb-1">Captain: <strong class="text-white">@(team.Captain?.FullName ?? "N/A")</strong></div>
+                                    <div class="text-secondary">Squad Size: <strong class="text-info">@team.Players.Count Roster Players</strong></div>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                                <a asp-controller="Team" asp-action="Details" asp-route-id="@team.Id" class="btn btn-sm btn-khel-outline">
+                                    View Squad Lineup
+                                </a>
+                                @if (User.IsInRole("Admin") || (team.CaptainId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value))
+                                {
+                                    <a asp-controller="Team" asp-action="ManageRoster" asp-route-id="@team.Id" class="btn btn-sm btn-outline-info">
+                                        Manage
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="khel-card p-5 text-center text-secondary">
+                        <i class="bi bi-people fs-1 text-muted d-block mb-2"></i>
+                        <h5>No Teams Registered Yet</h5>
+                        <p class="small">Be the first team captain to register for this championship!</p>
+                        <a asp-controller="Team" asp-action="Register" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-sm btn-khel-accent">
+                            Register Team Now
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tab 3: Fixtures & Results -->
+    <div class="tab-pane fade" id="fixtures" role="tabpanel">
+        <div class="row g-3">
+            @if (Model.Matches.Any())
+            {
+                foreach (var match in Model.Matches)
+                {
+                    <div class="col-lg-6">
+                        <div class="match-card @(match.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing ? "border-danger border-opacity-50" : "")">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge @(match.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing ? "badge-live" : (match.MatchStatus == KhelTrack.Models.MatchStatus.Completed ? "badge-completed" : "badge-scheduled"))">
+                                    @match.MatchStatus
+                                </span>
+                                <span class="text-secondary small">@match.MatchDate.ToString("ddd, MMM dd - hh:mm tt")</span>
+                            </div>
+
+                            <div class="row align-items-center py-2 text-center text-md-start">
+                                <div class="col-md-5">
+                                    <div class="team-name-lg @(match.WinnerTeamId == match.TeamAId ? "text-warning" : "")">
+                                        @if (match.WinnerTeamId == match.TeamAId)
+                                        {
+                                            <i class="bi bi-trophy-fill text-warning me-1"></i>
+                                        }
+                                        @match.TeamA?.TeamName
+                                    </div>
+                                    <div class="text-secondary small">@match.TeamA?.Department</div>
+                                </div>
+                                <div class="col-md-2 text-center my-2 my-md-0">
+                                    @if (match.MatchStatus == KhelTrack.Models.MatchStatus.Completed || match.MatchStatus == KhelTrack.Models.MatchStatus.Ongoing)
+                                    {
+                                        <div class="score-display">
+                                            @(match.TeamAScore ?? "0") - @(match.TeamBScore ?? "0")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark border border-secondary text-secondary px-3 py-2">VS</span>
+                                    }
+                                </div>
+                                <div class="col-md-5 text-md-end">
+                                    <div class="team-name-lg @(match.WinnerTeamId == match.TeamBId ? "text-warning" : "")">
+                                        @match.TeamB?.TeamName
+                                        @if (match.WinnerTeamId == match.TeamBId)
+                                        {
+                                            <i class="bi bi-trophy-fill text-warning ms-1"></i>
+                                        }
+                                    </div>
+                                    <div class="text-secondary small">@match.TeamB?.Department</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-25 small">
+                                <span class="text-muted"><i class="bi bi-geo-alt me-1"></i>@match.Ground</span>
+                                <div class="d-flex gap-2">
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a asp-controller="Match" asp-action="UpdateScore" asp-route-id="@match.Id" class="btn btn-xs btn-outline-warning">
+                                            Score
+                                        </a>
+                                    }
+                                    <a asp-controller="Match" asp-action="Details" asp-route-id="@match.Id" class="btn btn-xs btn-khel-outline">
+                                        Scorecard
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="khel-card p-5 text-center text-secondary">
+                        <i class="bi bi-calendar-x fs-1 text-muted d-block mb-2"></i>
+                        <h5>No Matches Scheduled Yet</h5>
+                        <p class="small">The tournament committee will publish the match fixtures soon.</p>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Match" asp-action="Create" asp-route-tournamentId="@Model.Tournament.Id" class="btn btn-sm btn-khel-primary">
+                                Schedule First Match
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tab 4: Points Table -->
+    <div class="tab-pane fade" id="standings" role="tabpanel">
+        <div class="khel-card">
+            <div class="table-responsive">
+                <table class="table table-khel align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Rank</th>
+                            <th>Team</th>
+                            <th>Department</th>
+                            <th class="text-center">Played</th>
+                            <th class="text-center">Won</th>
+                            <th class="text-center">Lost</th>
+                            <th class="text-center">Drawn</th>
+                            <th class="text-center">Form Guide</th>
+                            <th class="text-center">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Leaderboard.Any())
+                        {
+                            int rank = 1;
+                            foreach (var item in Model.Leaderboard)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (rank == 1)
+                                        {
+                                            <span class="badge rounded-circle bg-warning text-dark fw-bold" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">1</span>
+                                        }
+                                        else if (rank == 2)
+                                        {
+                                            <span class="badge rounded-circle bg-secondary text-light fw-bold" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">2</span>
+                                        }
+                                        else if (rank == 3)
+                                        {
+                                            <span class="badge rounded-circle bg-danger text-light fw-bold" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">3</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary fw-bold ps-2">@rank</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Team" asp-action="Details" asp-route-id="@item.TeamId" class="text-white text-decoration-none fw-bold hover-info">
+                                            @item.TeamName
+                                        </a>
+                                    </td>
+                                    <td><span class="badge bg-dark border border-secondary text-secondary">@item.Department</span></td>
+                                    <td class="text-center">@item.MatchesPlayed</td>
+                                    <td class="text-center text-success fw-bold">@item.Won</td>
+                                    <td class="text-center text-danger">@item.Lost</td>
+                                    <td class="text-center text-secondary">@item.Drawn</td>
+                                    <td class="text-center">
+                                        @if (item.Form != "-")
+                                        {
+                                            foreach (var f in item.Form.Split('-'))
+                                            {
+                                                <span class="badge @(f == "W" ? "bg-success" : (f == "L" ? "bg-danger" : "bg-secondary")) rounded-circle" style="width: 18px; height: 18px; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center;">@f</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 fs-6 fw-bold px-3 py-1">
+                                            @item.Points
+                                        </span>
+                                    </td>
+                                </tr>
+                                rank++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-secondary">
+                                    No completed matches or approved teams recorded for this tournament standings yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

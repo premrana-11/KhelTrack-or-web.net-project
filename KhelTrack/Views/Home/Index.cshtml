@@ -1,0 +1,337 @@
+@model KhelTrack.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Campus Sports Tournament Hub";
+}
+
+<!-- Hero Banner -->
+<div class="hero-gradient p-4 p-md-5 mb-4">
+    <div class="hero-glow-blob"></div>
+    <div class="row align-items-center position-relative">
+        <div class="col-lg-8">
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 border border-primary border-opacity-25 text-info small fw-bold mb-3">
+                <i class="bi bi-broadcast text-danger"></i> Live Intra-College Athletic Season 2026
+            </div>
+            <h1 class="display-4 fw-extrabold text-white mb-3" style="letter-spacing: -1.5px;">
+                Intra-College Sports & <span class="text-warning">Tournament</span> Hub
+            </h1>
+            <p class="lead text-secondary mb-4" style="max-width: 650px;">
+                Real-time fixture scheduling, team roster verifications, points tables, live match scores, and immutable audit logs across campus athletics.
+            </p>
+            <div class="d-flex flex-wrap gap-3">
+                <a asp-controller="Tournament" asp-action="Index" class="btn btn-khel-primary btn-lg px-4">
+                    <i class="bi bi-trophy-fill me-2"></i> Explore Tournaments
+                </a>
+                <a asp-controller="Match" asp-action="Index" class="btn btn-khel-outline btn-lg px-4">
+                    <i class="bi bi-broadcast me-2 text-danger"></i> Live Scores & Fixtures
+                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Team" asp-action="Register" class="btn btn-khel-accent btn-lg px-4">
+                        <i class="bi bi-plus-circle me-2"></i> Register Your Team
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-khel-accent btn-lg px-4">
+                        <i class="bi bi-person-plus-fill me-2"></i> Join as Captain
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4 d-none d-lg-block text-center">
+            <div class="p-4 rounded-4 bg-dark bg-opacity-50 border border-secondary border-opacity-25 shadow-lg">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge-live"><span class="live-dot"></span> LIVE MATCH</span>
+                    <span class="text-secondary small">Campus Arena</span>
+                </div>
+                @if (Model.LiveMatches.Any())
+                {
+                    var live = Model.LiveMatches.First();
+                    <div class="text-white fw-bold fs-5 mb-1">@live.TeamA?.TeamName</div>
+                    <div class="score-display d-inline-block my-2">
+                        @(live.TeamAScore ?? "0") - @(live.TeamBScore ?? "0")
+                    </div>
+                    <div class="text-white fw-bold fs-5 mb-2">@live.TeamB?.TeamName</div>
+                    <div class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> @live.Ground</div>
+                    <a asp-controller="Match" asp-action="Details" asp-route-id="@live.Id" class="btn btn-sm btn-outline-info w-100">
+                        View Match Scorecard <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                }
+                else
+                {
+                    <div class="py-4 text-secondary">
+                        <i class="bi bi-trophy fs-1 d-block mb-2 text-muted"></i>
+                        No active live matches right now. Check scheduled fixtures!
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Counters -->
+<div class="row g-3 mb-5">
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="text-secondary small fw-semibold text-uppercase">Tournaments</span>
+                    <div class="stat-value mt-1">@Model.TotalTournaments</div>
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 mt-2">
+                        @Model.ActiveTournaments Active
+                    </span>
+                </div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-trophy"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="text-secondary small fw-semibold text-uppercase">Registered Teams</span>
+                    <div class="stat-value mt-1">@Model.TotalTeams</div>
+                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 mt-2">
+                        @Model.ApprovedTeams Approved
+                    </span>
+                </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-shield-shaded"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="text-secondary small fw-semibold text-uppercase">Match Fixtures</span>
+                    <div class="stat-value mt-1">@Model.TotalMatches</div>
+                    @if (Model.LiveMatchesCount > 0)
+                    {
+                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 mt-2">
+                            <span class="live-dot d-inline-block me-1"></span> @Model.LiveMatchesCount Ongoing
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25 mt-2">
+                            @Model.CompletedMatchesCount Finished
+                        </span>
+                    }
+                </div>
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="text-secondary small fw-semibold text-uppercase">Rostered Athletes</span>
+                    <div class="stat-value mt-1">@Model.TotalAthletes</div>
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 mt-2">
+                        Verified Students
+                    </span>
+                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 1: Live & Upcoming Matches -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-white mb-0">
+                <i class="bi bi-activity text-danger me-2"></i>Live & Scheduled Matches
+            </h4>
+            <a asp-controller="Match" asp-action="Index" class="btn btn-sm btn-khel-outline">
+                All Fixtures <i class="bi bi-chevron-right ms-1"></i>
+            </a>
+        </div>
+
+        @if (Model.LiveMatches.Any())
+        {
+            <div class="mb-4">
+                <div class="text-secondary small fw-bold text-uppercase mb-2">Live Ongoing Matches</div>
+                <div class="row g-3">
+                    @foreach (var match in Model.LiveMatches)
+                    {
+                        <div class="col-12">
+                            <div class="match-card border-danger border-opacity-50">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge-live"><span class="live-dot"></span> LIVE</span>
+                                        <span class="badge bg-secondary bg-opacity-25 text-light">@match.Tournament?.SportType</span>
+                                        <span class="text-secondary small">@match.RoundName</span>
+                                    </div>
+                                    <span class="text-muted small"><i class="bi bi-geo-alt me-1 text-danger"></i>@match.Ground</span>
+                                </div>
+
+                                <div class="row align-items-center g-2 text-center text-md-start">
+                                    <div class="col-md-5">
+                                        <div class="team-name-lg">@match.TeamA?.TeamName</div>
+                                        <div class="text-secondary small">@match.TeamA?.Department</div>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <div class="score-display">
+                                            @(match.TeamAScore ?? "0") - @(match.TeamBScore ?? "0")
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 text-md-end">
+                                        <div class="team-name-lg">@match.TeamB?.TeamName</div>
+                                        <div class="text-secondary small">@match.TeamB?.Department</div>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(match.HighlightsSummary))
+                                {
+                                    <div class="mt-3 pt-2 border-top border-secondary border-opacity-25 text-info small">
+                                        <i class="bi bi-info-circle me-1"></i> @match.HighlightsSummary
+                                    </div>
+                                }
+
+                                <div class="mt-3 text-end">
+                                    <a asp-controller="Match" asp-action="Details" asp-route-id="@match.Id" class="btn btn-sm btn-khel-primary">
+                                        View Scorecard <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="text-secondary small fw-bold text-uppercase mb-2">Upcoming Scheduled Matches</div>
+        <div class="row g-3">
+            @if (Model.UpcomingFixtures.Any())
+            {
+                @foreach (var fixture in Model.UpcomingFixtures)
+                {
+                    <div class="col-md-6">
+                        <div class="match-card h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge badge-scheduled">@fixture.MatchStatus</span>
+                                    <span class="text-muted small">@fixture.MatchDate.ToString("ddd, MMM dd - hh:mm tt")</span>
+                                </div>
+                                <div class="fw-bold text-white fs-6 mb-1">
+                                    @fixture.TeamA?.TeamName <span class="text-warning">vs</span> @fixture.TeamB?.TeamName
+                                </div>
+                                <div class="text-secondary small mb-2">
+                                    <i class="bi bi-trophy me-1 text-warning"></i>@fixture.Tournament?.Name
+                                </div>
+                                <div class="text-muted small">
+                                    <i class="bi bi-geo-alt me-1 text-info"></i>@fixture.Ground
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary bg-opacity-25 text-light">@fixture.RoundName</span>
+                                <a asp-controller="Match" asp-action="Details" asp-route-id="@fixture.Id" class="btn btn-sm btn-khel-outline">
+                                    Match Info
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="p-4 rounded bg-dark border border-secondary border-opacity-25 text-center text-secondary">
+                        No upcoming fixtures scheduled. Stay tuned!
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Section 2: Featured Tournaments & Governance -->
+    <div class="col-lg-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-white mb-0">
+                <i class="bi bi-trophy text-warning me-2"></i>Tournaments
+            </h4>
+            <a asp-controller="Tournament" asp-action="Index" class="btn btn-sm btn-khel-outline">
+                View All
+            </a>
+        </div>
+
+        <div class="d-flex flex-column gap-3 mb-4">
+            @foreach (var tourney in Model.FeaturedTournaments)
+            {
+                <div class="khel-card p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">
+                            @tourney.SportType
+                        </span>
+                        @if (tourney.Status == TournamentStatus.Active)
+                        {
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">Upcoming</span>
+                        }
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-1">@tourney.Name</h5>
+                    <p class="text-secondary small mb-2 text-truncate">@tourney.Description</p>
+
+                    <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                        <span><i class="bi bi-geo-alt me-1"></i>@tourney.Venue</span>
+                        <span><i class="bi bi-people me-1"></i>@(tourney.Teams?.Count ?? 0) / @tourney.MaxTeams Teams</span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-controller="Tournament" asp-action="Details" asp-route-id="@tourney.Id" class="btn btn-sm btn-khel-primary w-100">
+                            Tournament Hub
+                        </a>
+                        <a asp-controller="Team" asp-action="Register" asp-route-tournamentId="@tourney.Id" class="btn btn-sm btn-khel-outline" title="Register Team">
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Recent Audit Governance Trail -->
+        <div class="khel-card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold text-white small text-uppercase">
+                    <i class="bi bi-shield-check text-success me-1"></i> Campus Audit Trail
+                </span>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Admin" asp-action="AuditLogs" class="text-info small text-decoration-none">Full Log</a>
+                }
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                @foreach (var log in Model.RecentActivities)
+                {
+                    <div class="p-2 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 small">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge-action badge-action-status">@log.Action</span>
+                            <span class="text-muted" style="font-size: 0.72rem;">@log.TimestampUtc.ToString("g")</span>
+                        </div>
+                        <div class="text-secondary text-truncate" title="@log.Details">@log.Details</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

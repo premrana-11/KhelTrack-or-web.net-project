@@ -1,0 +1,102 @@
+@model IEnumerable<KhelTrack.Models.Team>
+@{
+    ViewData["Title"] = "My Registered Teams";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-flag-fill me-2 text-warning"></i>My Registered Teams</h2>
+        <p class="text-secondary mb-0">Track verification status, review comments, and manage rosters for your squads.</p>
+    </div>
+
+    <a asp-action="Register" class="btn btn-khel-accent">
+        <i class="bi bi-plus-lg me-1"></i> Register New Team
+    </a>
+</div>
+
+<div class="row g-4">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var team in Model)
+        {
+            <div class="col-lg-6">
+                <div class="khel-card p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h4 class="fw-bold text-white mb-1">@team.TeamName</h4>
+                            <span class="text-secondary small">
+                                <i class="bi bi-trophy text-warning me-1"></i>@team.Tournament?.Name (@team.Tournament?.SportType)
+                            </span>
+                        </div>
+
+                        <div>
+                            @if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Approved)
+                            {
+                                <span class="badge badge-completed fs-6"><i class="bi bi-check-circle me-1"></i> Approved</span>
+                            }
+                            else if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Pending)
+                            {
+                                <span class="badge badge-pending fs-6"><i class="bi bi-hourglass-split me-1"></i> Under Review</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-rejected fs-6"><i class="bi bi-x-circle me-1"></i> Rejected</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(team.RejectionReason))
+                    {
+                        <div class="p-3 mb-3 rounded bg-danger bg-opacity-15 border border-danger border-opacity-30 text-light small">
+                            <strong class="text-danger"><i class="bi bi-exclamation-octagon me-1"></i> Committee Feedback:</strong>
+                            <div class="mt-1">@team.RejectionReason</div>
+                        </div>
+                    }
+
+                    <div class="p-3 mb-3 rounded bg-dark border border-secondary border-opacity-25 small">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <span class="text-secondary d-block">Department:</span>
+                                <span class="text-white fw-semibold">@team.Department</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-secondary d-block">Registered On:</span>
+                                <span class="text-white">@team.CreatedAt.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-secondary d-block">Contact:</span>
+                                <span class="text-white">@team.ContactPhone</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-secondary d-block">Roster Athletes:</span>
+                                <span class="text-info fw-bold">@team.Players.Count Verified</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a asp-action="Details" asp-route-id="@team.Id" class="btn btn-sm btn-khel-outline">
+                            View Squad Details
+                        </a>
+                        <a asp-action="ManageRoster" asp-route-id="@team.Id" class="btn btn-sm btn-khel-primary">
+                            <i class="bi bi-person-gear me-1"></i> Manage Roster
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="khel-card p-5 text-center text-secondary">
+                <i class="bi bi-shield-x fs-1 text-muted d-block mb-3"></i>
+                <h5>No Teams Registered Under Your Account</h5>
+                <p class="small">Choose an upcoming or active championship and submit your departmental squad.</p>
+                <a asp-action="Register" class="btn btn-khel-accent mt-2">
+                    Register a Team Now
+                </a>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,133 @@
+@model KhelTrack.Models.ApplicationUser
+@{
+    ViewData["Title"] = "User Profile";
+    var roles = ViewBag.Roles as IList<string>;
+    var myTeams = ViewBag.MyTeams as List<KhelTrack.Models.Team>;
+}
+
+<div class="row g-4">
+    <!-- User Information Card -->
+    <div class="col-lg-4">
+        <div class="khel-card p-4 text-center">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2rem;">
+                @(Model.FullName.Length > 0 ? Model.FullName.Substring(0, 1) : "U")
+            </div>
+            <h4 class="fw-bold text-white mb-1">@Model.FullName</h4>
+            <p class="text-secondary small mb-3">@Model.Email</p>
+
+            <div class="d-flex justify-content-center gap-1 mb-4">
+                @if (roles != null)
+                {
+                    foreach (var role in roles)
+                    {
+                        <span class="badge @(role == "Admin" ? "bg-danger" : (role == "Captain" ? "bg-warning text-dark" : "bg-info")) px-3 py-1">
+                            @role
+                        </span>
+                    }
+                }
+            </div>
+
+            <div class="border-top border-secondary border-opacity-25 pt-3 text-start">
+                <div class="mb-2">
+                    <span class="text-secondary small d-block">Department:</span>
+                    <span class="text-white fw-semibold">@Model.Department</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-secondary small d-block">College Roll No:</span>
+                    <span class="text-white fw-semibold">@Model.CollegeRollNo</span>
+                </div>
+                <div>
+                    <span class="text-secondary small d-block">Member Since:</span>
+                    <span class="text-white fw-semibold">@Model.RegisteredAt.ToString("MMMM dd, yyyy")</span>
+                </div>
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-sm btn-khel-primary w-100">
+                        <i class="bi bi-shield-lock me-1"></i> Open Admin Console
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- User's Teams -->
+    <div class="col-lg-8">
+        <div class="khel-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0">
+                    <i class="bi bi-flag-fill text-warning me-2"></i>My Registered Teams
+                </h5>
+                <a asp-controller="Team" asp-action="Register" class="btn btn-sm btn-khel-accent">
+                    <i class="bi bi-plus-lg me-1"></i> Register New Team
+                </a>
+            </div>
+
+            @if (myTeams != null && myTeams.Any())
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var team in myTeams)
+                    {
+                        <div class="p-3 rounded bg-dark border border-secondary border-opacity-25">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                                <div>
+                                    <h6 class="fw-bold text-white mb-0">@team.TeamName</h6>
+                                    <span class="text-secondary small">
+                                        <i class="bi bi-trophy me-1 text-warning"></i>@team.Tournament?.Name (@team.Tournament?.SportType)
+                                    </span>
+                                </div>
+                                <div>
+                                    @if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Approved)
+                                    {
+                                        <span class="badge badge-completed"><i class="bi bi-check-circle me-1"></i> Approved</span>
+                                    }
+                                    else if (team.RegistrationStatus == KhelTrack.Models.TeamStatus.Pending)
+                                    {
+                                        <span class="badge badge-pending"><i class="bi bi-hourglass-split me-1"></i> Pending Review</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-rejected"><i class="bi bi-x-circle me-1"></i> Rejected</span>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(team.RejectionReason))
+                            {
+                                <div class="p-2 mb-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25 text-danger small">
+                                    <strong>Feedback:</strong> @team.RejectionReason
+                                </div>
+                            }
+
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25 small">
+                                <span class="text-secondary">
+                                    <i class="bi bi-people me-1"></i> @team.Players.Count Roster Players
+                                </span>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Team" asp-action="Details" asp-route-id="@team.Id" class="btn btn-xs btn-khel-outline">
+                                        View Team
+                                    </a>
+                                    <a asp-controller="Team" asp-action="ManageRoster" asp-route-id="@team.Id" class="btn btn-xs btn-outline-info">
+                                        Manage Roster
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="py-5 text-center text-secondary">
+                    <i class="bi bi-shield-x fs-1 text-muted d-block mb-2"></i>
+                    <p class="mb-3">You have not registered any team yet.</p>
+                    <a asp-controller="Team" asp-action="Register" class="btn btn-sm btn-khel-primary">
+                        Register Your First Team
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
